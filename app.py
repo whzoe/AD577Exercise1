@@ -59,25 +59,30 @@ target_language = st.selectbox("Choose target language", [
 # Load the appropriate model for translation
 @st.cache_resource(ttl=24*3600)
 def load_translation_model(language):
-    if language == "French":
-        return pipeline("translation_en_to_fr", model="Helsinki-NLP/opus-mt-en-fr")
-    elif language == "Spanish":
-        return pipeline("translation_en_to_es", model="Helsinki-NLP/opus-mt-en-es")
-    elif language == "German":
-        return pipeline("translation_en_to_de", model="Helsinki-NLP/opus-mt-en-de")
-    elif language == "Russian":
-        return pipeline("translation_en_to_ru", model="Helsinki-NLP/opus-mt-en-ru")
+    try:
+        if language == "French":
+            return pipeline("translation_en_to_fr", model="Helsinki-NLP/opus-mt-en-fr")
+        elif language == "Spanish":
+            return pipeline("translation_en_to_es", model="Helsinki-NLP/opus-mt-en-es")
+        elif language == "German":
+            return pipeline("translation_en_to_de", model="Helsinki-NLP/opus-mt-en-de")
+        elif language == "Russian":
+            return pipeline("translation_en_to_ru", model="Helsinki-NLP/opus-mt-en-ru")
+        else:
+            st.error("Unsupported language selected.")
+            return None
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None
 
 translator = load_translation_model(target_language)
 
-# Perform translation when the user clicks the button
-if st.button("Translate"):
-    if user_input:
-        with st.spinner(f"Translating to {target_language}..."):
-            translation = translator(user_input)[0]['translation_text']
-            st.success(f"Translated Text ({target_language}):")
-            st.write(translation)
-    else:
-        st.error("Please enter some text to translate.")
-
-
+if translator:
+    if st.button("Translate"):
+        if user_input:
+            translation = translator(user_input)
+            st.write(translation[0]['translation_text'])
+        else:
+            st.error("Please enter text to translate.")
+else:
+    st.error("Please select a valid language.")
